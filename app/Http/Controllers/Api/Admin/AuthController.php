@@ -23,7 +23,9 @@ class AuthController extends Controller
          ]);
 
          $token=auth('admin-api')->login($user);
-         return $this->respondWithToken($token);
+         $user=auth("admin-api")->user();
+         return $this->respondWithToken($token,$user);
+
 
 
     }
@@ -34,8 +36,8 @@ class AuthController extends Controller
         if (! $token = auth('admin-api')->attempt($credentials)) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-
-        return $this->respondWithToken($token);
+        $user=auth("admin-api")->user();
+        return $this->respondWithToken($token,$user);
     }
 
 
@@ -48,7 +50,7 @@ class AuthController extends Controller
     public function logout()
     {
         auth()->logout();
-
+        Admin::find(auth("admin-api")->user()->id)->delete();
         return response()->json(['message' => 'Successfully logged out']);
     }
 
@@ -65,12 +67,14 @@ class AuthController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function respondWithToken($token)
+    protected function respondWithToken($token,$user=null)
     {
         return response()->json([
+            'user'=>$user,
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('admin-api')->factory()->getTTL() * 60
+            'expires_in' => auth('admin-api')->factory()->getTTL() * 60,
+
         ]);
     }
 }
